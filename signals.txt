@@ -1,0 +1,48 @@
+Q1.By default are django signals executed synchronously or asynchronously?
+--- By default the django signals are synchornous. by default everything is synchronous in django. they execute in the order they are called, 
+by blocking the execution of the calling code until the signal handlers have completed.and we can have the methods that can execute 
+asynchoronously.
+
+code snippet-
+from django.db import models
+from django.db.models.signals import post_save, pre_save
+from django.dispatch import receiver
+
+class SampleModel(models.Model):
+    name = models.CharField(max_length=50, null=True)
+
+@receiver(pre_save, sender=SampleModel)
+def signal_handler(sender, instance, **kwargs):
+    print(f"pre_save")
+
+@receiver(post_save, sender=SampleModel)
+def signal_handler(sender, instance, **kwargs):
+    print(f"post_save")
+
+Q2.Do Django signals run in the same thread as the caller?
+Ans-- yes, by default, Django signal run in the same thread as the callr. This means that when a signal is sent, the connected signal handlers are executed 
+in the same thread, blocking the execution until the signal handlers finish.
+
+code snippet--
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from threading import Thread
+
+@receiver(post_save, sender=SampleModel)
+def signal_handler(sender, instance, **kwargs):
+    print(f"Signal handler thread: {threading.current_thread().name}")
+
+
+Q3.Do Django signals run in the same database transaction as the caller by default?
+--- Yes, Django signals run in the same database transaction as the caller, database transactions are always isolated to make it fail safe.
+in simple words,  This mean that the transaction is rolled back when an exception is raised in the signal handler. so signal run in the same database transaction as the caller.
+
+
+from django.db import models, transaction
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=SampleModel)
+def my_signal_handler(sender, instance, **kwargs):
+    print("Signal_handler started")
+    raise Exception("Forcing a transaction rollback")
